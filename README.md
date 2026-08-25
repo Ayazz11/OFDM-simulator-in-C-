@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # OFDM Link-Level Simulator (Modern C++)
 
 A modular, class-based OFDM link-level simulator: bits → QAM mapping →
@@ -126,3 +127,6 @@ are exactly the points worth being able to discuss in an interview.
    `LinkSimulator::runBerSweep` across SNR points with a thread pool;
    directly relevant since this is where real link-level simulators spend
    their compute budget.
+=======
+# OFDM-simulator-in-C-
+>>>>>>> 8c6d06781d6f8c592f66af9901f0f4de2efdd4bd
