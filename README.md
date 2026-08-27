@@ -1,132 +1,237 @@
-<<<<<<< HEAD
-# OFDM Link-Level Simulator (Modern C++)
+# OFDM Link-Level Simulator in C++
 
-A modular, class-based OFDM link-level simulator: bits → QAM mapping →
-OFDM modulation (IFFT + cyclic prefix) → AWGN channel → OFDM demodulation
-(FFT) → QAM demapping → BER/BLER analysis. Validated against the closed-form
-theoretical AWGN bit-error-rate bound for QPSK, 16-QAM, and 64-QAM.
+This is a modular OFDM simulator written in modern C++. It goes through the
+full chain — bits, QAM modulation, OFDM (IFFT + cyclic prefix), an AWGN
+channel, then the receiver side (FFT, cyclic prefix removal, QAM
+demodulation) — and checks the results against the known theoretical BER
+curves.
+
+Chain:
+
+```
+Bit Generation → QAM Modulation → OFDM Modulation (IFFT + CP)
+→ AWGN Channel → OFDM Demodulation (FFT + CP removal)
+→ QAM Demodulation → BER Analysis
+```
+
+What it currently does:
+
+- QPSK, 16-QAM, 64-QAM
+- AWGN channel
+- Monte Carlo BER simulation
+- Comparison against theoretical BER
+- Cyclic prefix insertion/removal
+- Unit tests for each stage
+
+Each part of the system is its own class, so I can test and change pieces
+without touching the rest.
 
 ![BER curve](results/ber_curve.png)
 
-Simulated BER (markers) matches the theoretical Gray-coded square-QAM AWGN
-bound (lines) to within Monte Carlo noise across all three modulation
-orders, confirming the mapper, IFFT/FFT chain, CP handling, and noise model
-are all implemented correctly end-to-end.
+---
 
 ## Architecture
 
-Each pipeline stage is an independent, unit-tested class with a narrow
-interface (`std::vector<...>` in, `std::vector<...>` out):
-
 ```
-BitSource → QamModulator::map → OfdmModulator::modulate (subcarrier map,
-IFFT, +CP) → Channel::addAwgn → OfdmModulator::demodulate (-CP, FFT,
-extract subcarriers) → QamModulator::demap → BER comparison
-```
-
-`LinkSimulator` is the orchestration layer -- it owns no DSP logic itself,
-only sequencing and Monte Carlo accumulation over an SNR sweep.
-
-```
-include/
-  SystemConfig.hpp     - single source of truth for all numeric parameters
-  BitSource.hpp         - i.i.d. random bit generator
-  QamModulator.hpp      - Gray-coded square-QAM map/demap (QPSK/16/64-QAM)
-  OfdmModulator.hpp     - subcarrier mapping, IFFT/FFT, CP insert/remove
-  Channel.hpp            - AWGN channel
-  BerAnalyzer.hpp       - closed-form theoretical BER (validation reference)
-  LinkSimulator.hpp     - pipeline orchestration + Monte Carlo sweep
-src/
-  LinkSimulator.cpp
-  main.cpp              - single-modulation run (config in SystemConfig)
-  main_all_mod.cpp      - QPSK/16-QAM/64-QAM comparison sweep
-tests/
-  test_qam.cpp           - map/demap round-trip, energy normalization
-  test_ofdm.cpp           - IFFT/FFT round-trip, CP correctness, Parseval check
-  test_pipeline.cpp     - full-chain loopback, BER-vs-theory validation
-scripts/
-  plot_ber.py           - generates results/ber_curve.png from the CSVs
-external/kissfft_header - vendored kissfft.hh (single-header, BSD-3-Clause)
+BitSource
+    ↓
+QAM Modulator
+    ↓
+OFDM Modulator
+    ├── Subcarrier Mapping
+    ├── IFFT
+    └── Cyclic Prefix
+    ↓
+Channel (AWGN)
+    ↓
+OFDM Demodulator
+    ├── Cyclic Prefix Removal
+    ├── FFT
+    └── Subcarrier Extraction
+    ↓
+QAM Demodulator
+    ↓
+BER Analysis
 ```
 
-## Building and running
+`LinkSimulator` wires all of this together and runs the Monte Carlo loop —
+it doesn't do any signal processing itself, just calls the other classes in
+order and keeps count of bit errors.
 
-Requires CMake >= 3.16 and a C++17 compiler. Catch2 and the test harness are
-fetched automatically via CMake FetchContent (needs network access on
-first configure).
+---
 
-```bash
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . -j4
+## Files
 
-./nr_phy_tests            # unit tests (207 assertions)
-./nr_phy_sim               # single-modulation BER sweep -> results/ber_results.csv
-./nr_phy_sim_all_mod       # QPSK/16/64-QAM sweep -> results/ber_results_bps{2,4,6}.csv
+```
+    SystemConfig.hpp     - all the OFDM/simulation parameters in one place
+    BitSource.hpp         - random bit generator
+    QamModulator.hpp      - QPSK/16-QAM/64-QAM modulation and demodulation
+    OfdmModulator.hpp     - subcarrier mapping, IFFT/FFT, CP add/remove
+    Channel.hpp            - AWGN
+    BerAnalyzer.hpp       - theoretical BER formula, for comparison
+    LinkSimulator.hpp     - runs the pipeline end to end
 
-cd .. && python3 scripts/plot_ber.py   # -> results/ber_curve.png
+    LinkSimulator.cpp
+    main.cpp              - runs one modulation scheme
+    main_all_mod.cpp      - runs QPSK, 16-QAM, 64-QAM together
+
+    plot_ber.py            - plots the BER results
+
+    kissfft.hh             - the FFT library (single header)
 ```
 
-## Design decisions and documented simplifications
+---
 
-Being explicit about what's modeled vs. simplified is deliberate -- these
-are exactly the points worth being able to discuss in an interview.
+## Current configuration
 
-- **Unitary FFT/IFFT scaling (1/√N both directions).** Chosen so QAM
-  symbol energy is preserved exactly through the transform (Parseval),
-  which makes the Eb/N0 → noise-variance conversion in `Channel`
-  straightforward and keeps the simulated curve directly comparable to
-  the closed-form bound. Verified explicitly in
-  `test_ofdm.cpp::"Energy is preserved..."`.
+```
+FFT size              = 64
+Used subcarriers      = 52
+Cyclic prefix length  = 16
+Modulation            = QPSK (can switch to 16-QAM or 64-QAM)
+SNR range             = 0 to 20 dB
+```
 
-- **AWGN added in the time domain, at the sample level, not the symbol
-  level.** This matches how noise actually enters a receiver (at the
-  ADC/front-end, before CP removal and FFT) rather than being injected
-  synthetically per-subcarrier. Because the transform is unitary, this is
-  provably equivalent to per-subcarrier noise of the same variance --
-  documented in `Channel.hpp`.
+- QPSK — 2 bits per symbol
+- 16-QAM — 4 bits per symbol
+- 64-QAM — 6 bits per symbol
 
-- **Noise model does not penalize for CP transmit-energy overhead.**
-  A real transmitter pays a small SNR penalty (~`cpLen/(fftSize+cpLen)`
-  in dB, ≈0.97 dB at cpLen=16/fftSize=64) because the CP retransmits
-  energy without carrying new information. This simulator reports
-  `SystemConfig::cpOverheadFraction()` separately as a spectral-efficiency
-  metric rather than folding it into the noise variance -- a deliberate
-  scope decision, not an oversight, and worth stating that way if asked.
+---
 
-- **Generic Gray-coded square-QAM, not the literal 3GPP TS 38.211 bit-to-
-  symbol table.** Functionally equivalent for BER/BLER analysis (same
-  constellation, same Gray labeling structure), but not byte-identical to
-  the specific table 3GPP defines for hardware/interleaving reasons.
-  Swapping in the exact 38.211 mapping is a natural, scoped extension.
+## How each part works
 
-- **No channel estimation / equalization yet** -- the AWGN channel has
-  unit gain, so there's nothing to equalize. This is the natural next
-  phase: add a multipath fading channel (tapped-delay line / CDL model),
-  DMRS pilot insertion, and MMSE channel estimation + equalization.
+### Bit generation
 
-- **Theoretical BER formula is a nearest-neighbor approximation.** It is
-  exact for QPSK but slightly loose for 16/64-QAM at low SNR (visible in
-  the 64-QAM curve at 0 dB: simulated 0.200 vs. theoretical 0.173) because
-  it undercounts higher-order neighbor error contributions. The two
-  converge tightly by ~14-16 dB, exactly as expected -- this gap is a
-  known property of the reference formula, not a simulator bug.
+`BitSource` produces random bits using `std::mt19937` with a fixed seed, so
+runs are repeatable.
 
-## Suggested next phases
+### QAM modulation
 
-1. **Multipath fading channel** (CDL-A/B tapped-delay line) + DMRS pilot
-   insertion + LS/MMSE channel estimation + ZF/MMSE equalization --
-   biggest single credibility jump for "realistic" 5G NR PHY.
-2. **Synchronization**: timing/frequency offset estimation via
-   correlation-based detection.
-3. **Channel coding** (rate-1/2 convolutional or LDPC) for BLER (not just
-   uncoded BER) analysis.
-4. **PAPR analysis** of the transmitted waveform -- easy extension, useful
-   talking point for hybrid-beamforming-adjacent roles.
-5. **Multithreaded Monte Carlo** -- parallelize the per-trial loop in
-   `LinkSimulator::runBerSweep` across SNR points with a thread pool;
-   directly relevant since this is where real link-level simulators spend
-   their compute budget.
-=======
-# OFDM-simulator-in-C-
->>>>>>> 8c6d06781d6f8c592f66af9901f0f4de2efdd4bd
+`QamModulator` turns groups of bits into complex symbols (Gray-coded square
+QAM), and the same class demodulates them back with a hard-decision rule.
+Symbol energy is normalized to 1, which keeps the Eb/N0 math simple and
+consistent across QPSK/16-QAM/64-QAM.
+
+### OFDM modulation
+
+`OfdmModulator` takes the QAM symbols, maps them onto subcarriers (around
+DC, DC itself left empty), runs a 64-point IFFT, and adds the cyclic
+prefix — the last 16 samples of the symbol, copied to the front:
+
+```
+symbol:      x[0] x[1] ... x[47] x[48] ... x[63]
+CP:                                x[48] ... x[63]
+transmitted: x[48] ... x[63]  x[0] x[1] ... x[63]
+```
+
+### OFDM demodulation
+
+Same class, reverse order: strip the CP, run the FFT, pull the data back
+off the subcarriers.
+
+The IFFT/FFT both use 1/sqrt(N) scaling, so signal energy stays consistent
+between time and frequency domain — this matters for getting the noise
+level right later.
+
+### Channel
+
+Right now it's AWGN only:
+
+```
+y[n] = x[n] + w[n]
+```
+
+Noise is added to the time-domain waveform, before the CP is removed —
+same order a real receiver would see it in.
+
+### BER analysis
+
+```
+BER = bit errors / total bits transmitted
+```
+
+Compared against the standard theoretical formula for Gray-coded square
+QAM in AWGN:
+
+```
+BER ≈ (4/k)(1 - 1/sqrt(M)) × Q(sqrt(3k/(M-1) × Eb/N0))
+```
+
+where M is the modulation order and k = log2(M).
+
+---
+
+## Results
+
+Ran the Monte Carlo sweep for QPSK, 16-QAM, and 64-QAM. Simulated BER
+tracks the theoretical curve closely across all three. The small gap you
+see for 64-QAM at low SNR is expected — the theoretical formula is an
+approximation that gets less accurate for higher-order QAM at low SNR, not
+a bug in the simulation.
+
+---
+
+## Cyclic prefix
+
+With FFT size 64 and CP length 16, each OFDM symbol is 80 samples total.
+The CP carries no new information — it's just a copy of the tail of the
+symbol, there to absorb multipath delay spread and stop symbols from
+interfering with each other.
+
+A proper CP study is planned for the next phase (see below).
+
+---
+
+## Why it's built this way
+
+**Separate classes.** Each block (bits, QAM, OFDM, channel, BER) is its
+own class so I can swap one out without touching the others — e.g. later
+I can drop in Rayleigh fading in `Channel` without changing anything in
+`QamModulator`.
+
+**Unitary FFT/IFFT (1/sqrt(N)).** Keeps energy consistent across the
+transform, which makes the noise/Eb-N0 calculations straightforward.
+
+**Noise added in the time domain.** Matches where noise actually enters a
+real receiver — before CP removal and the FFT — rather than being added
+directly to the QAM symbols.
+
+**Symbol energy normalized to 1.** Gives a common reference point across
+QPSK/16-QAM/64-QAM so Eb/N0 means the same thing for all of them.
+
+---
+## Tests
+- **Bit generation test** — Generates a desired count of bit sequence
+- **QAM test** — modulation, demodulation, round-trip, energy check
+- **OFDM test** — IFFT/FFT, CP add/remove, energy preserved through the
+  transform, round-trip
+---
+
+## Next phase
+
+**1. Channel coding.** Adding a Hamming encoder/decoder around the
+existing chain:
+
+```
+Bits → Hamming Encoder → QAM → OFDM → Channel → OFDM Demod
+→ QAM Demod → Hamming Decoder → BER
+```
+
+Looking at coded vs. uncoded BER, how many errors get corrected, and the
+data-rate cost of the coding overhead.
+
+**2. Rayleigh multipath fading.** Replacing the AWGN-only channel with a
+multipath model (several delayed, faded paths). Looking at frequency-
+selective fading, BER vs. AWGN, and how the CP holds up once there's real
+multipath delay spread to deal with.
+
+**3. A proper cyclic prefix study.** What happens when CP length is
+shorter than the channel delay spread (ISI, broken orthogonality) vs. long
+enough (clean circular convolution, easy frequency-domain equalization),
+and the overhead/data-rate trade-off of making the CP longer.
+
+## Later on
+
+Channel estimation, ZF/MMSE equalization, DMRS/pilot insertion,
+constellation plots after the channel, BLER, PAPR analysis, more channel
+coding options.

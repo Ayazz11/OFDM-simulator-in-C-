@@ -15,7 +15,7 @@ int main()
         cfg.bitsPerSymbol = bps;
         cfg.snrStopDb = (bps == 2) ? 12.0 : (bps == 4) ? 22.0 : 30.0;
         cfg.snrStepDb = 2.0;
-        cfg.resultsCsvPath = "results/ber_results_bps" + std::to_string(bps) + ".csv";
+        cfg.results_awgn_CsvPath = "results_awgn/ber_results_bps" + std::to_string(bps) + ".csv";
 
         std::cout << "\n=== Running bitsPerSymbol=" << bps << " ===\n";
         LinkSimulator sim(cfg);
@@ -26,8 +26,8 @@ int main()
         }
         auto results = sim.runBerSweep();
         std::filesystem::create_directories(
-            std::filesystem::path(cfg.resultsCsvPath).parent_path());
-        LinkSimulator::writeCsv(cfg.resultsCsvPath, results);
+            std::filesystem::path(cfg.results_awgn_CsvPath).parent_path());
+        LinkSimulator::writeCsv(cfg.results_awgn_CsvPath, results);
     }
     return 0;
 }

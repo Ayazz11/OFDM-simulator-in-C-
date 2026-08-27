@@ -1,17 +1,9 @@
-#!/usr/bin/env python3
-"""
-Plot simulated vs. theoretical BER curves produced by nr_phy_sim /
-nr_phy_sim_all_mod. Reads results/ber_results_bps{2,4,6}.csv (falls back to
-results/ber_results.csv for a single-modulation run) and produces
-results/ber_curve.png -- the core proof-of-correctness artifact for the
-project README / CV.
-"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
-
+RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results_awgn")
 MOD_LABELS = {2: "QPSK", 4: "16-QAM", 6: "64-QAM"}
 COLORS = {2: "#1f77b4", 4: "#d62728", 6: "#2ca02c"}
 
@@ -51,7 +43,7 @@ def main():
     ax.legend(fontsize=9)
     fig.tight_layout()
 
-    out_path = os.path.join(RESULTS_DIR, "ber_curve.png")
+    out_path = os.path.join(RESULTS_DIR, "ber_curve_awgn.png")
     fig.savefig(out_path, dpi=150)
     print(f"Saved plot to {out_path}")
 

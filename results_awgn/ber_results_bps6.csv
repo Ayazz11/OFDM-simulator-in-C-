@@ -1,4 +1,4 @@
-snr_db,simulated_ber,theoretical_ber,total_bits,total_errors
+snr_db,simulated_ber,theoretical_ber,total_bits,bit_errors
 0,0.199932,0.172953,6240000,1247573
 2,0.156779,0.146124,6240000,978298
 4,0.118623,0.115764,6240000,740206
