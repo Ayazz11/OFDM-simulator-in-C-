@@ -197,7 +197,7 @@ For the coded OFDM pipeline, the Hamming-enabled BER sweep from 0 dB to
 add redundancy, so the decoder can correct many single-bit errors and
 detect double-bit errors, which reduces the final information-bit error
 rate.
-
+![BER curve](results_awgn/ber_coded_vs_uncoded.png)
 ---
 
 ## Cyclic prefix
