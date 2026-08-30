@@ -1,0 +1,60 @@
+===== Hamming-Coded OFDM Link Simulator =====
+
+FFT size: 64
+Used subcarriers: 52
+CP length: 16
+Bits per symbol: 4
+SNR range: 0 to 12 dB
+
+Running loopback test...
+Loopback test PASSED.
+
+Running BER simulation...
+
+SNR = 0 dB | Simulated BER = 0.152787 | Theoretical BER = 0.13916 | Errors = 436971 / 2860000 | 1-bit corrected = 129712 | 2-bit detected = 108104
+SNR = 1 dB | Simulated BER = 0.12228 | Theoretical BER = 0.118346 | Errors = 349721 / 2860000 | 1-bit corrected = 129507 | 2-bit detected = 98686
+SNR = 2 dB | Simulated BER = 0.0926 | Theoretical BER = 0.0975594 | Errors = 264836 / 2860000 | 1-bit corrected = 127266 | 2-bit detected = 85984
+SNR = 3 dB | Simulated BER = 0.0640101 | Theoretical BER = 0.0774154 | Errors = 183069 / 2860000 | 1-bit corrected = 123295 | 2-bit detected = 68487
+SNR = 4 dB | Simulated BER = 0.0402434 | Theoretical BER = 0.0586185 | Errors = 115096 / 2860000 | 1-bit corrected = 113968 | 2-bit detected = 49644
+SNR = 5 dB | Simulated BER = 0.0222469 | Theoretical BER = 0.0418923 | Errors = 63626 / 2860000 | 1-bit corrected = 99983 | 2-bit detected = 30599
+SNR = 6 dB | Simulated BER = 0.0104542 | Theoretical BER = 0.0278713 | Errors = 29899 / 2860000 | 1-bit corrected = 79584 | 2-bit detected = 16094
+SNR = 7 dB | Simulated BER = 0.00410594 | Theoretical BER = 0.0169667 | Errors = 11743 / 2860000 | 1-bit corrected = 55406 | 2-bit detected = 6806
+SNR = 8 dB | Simulated BER = 0.00123182 | Theoretical BER = 0.00924721 | Errors = 3523 / 2860000 | 1-bit corrected = 33822 | 2-bit detected = 2162
+SNR = 9 dB | Simulated BER = 0.00031049 | Theoretical BER = 0.00439034 | Errors = 888 / 2860000 | 1-bit corrected = 17403 | 2-bit detected = 576
+SNR = 10 dB | Simulated BER = 3.70629e-05 | Theoretical BER = 0.00175415 | Errors = 106 / 2860000 | 1-bit corrected = 7154 | 2-bit detected = 60
+SNR = 11 dB | Simulated BER = 8.04196e-06 | Theoretical BER = 0.000564706 | Errors = 23 / 2860000 | 1-bit corrected = 2302 | 2-bit detected = 17
+SNR = 12 dB | Simulated BER = 0 | Theoretical BER = 0.000138659 | Errors = 0 / 2860000 | 1-bit corrected = 560 | 2-bit detected = 0
+
+Simulation completed.
+Results saved to: results_awgn/ber_results_hamming.csv
+
+[Done] exited with code=0 in 26.491 seconds
+
+===== OFDM Link Simulator =====
+FFT size: 64
+Used subcarriers: 52
+CP length: 16
+Bits per symbol:  4
+SNR range: 0 to 12 dB
+
+Running loopback test...
+Loopback test PASSED.
+
+Running BER simulation...
+
+SNR = 0 dB | Simulated BER = 0.140822 | Theoretical BER = 0.13916 | Errors = 585818 / 4160000
+SNR = 1 dB | Simulated BER = 0.119052 | Theoretical BER = 0.118346 | Errors = 495257 / 4160000
+SNR = 2 dB | Simulated BER = 0.0979103 | Theoretical BER = 0.0975594 | Errors = 407307 / 4160000
+SNR = 3 dB | Simulated BER = 0.0772272 | Theoretical BER = 0.0774154 | Errors = 321265 / 4160000
+SNR = 4 dB | Simulated BER = 0.0586827 | Theoretical BER = 0.0586185 | Errors = 244120 / 4160000
+SNR = 5 dB | Simulated BER = 0.0417123 | Theoretical BER = 0.0418923 | Errors = 173523 / 4160000
+SNR = 6 dB | Simulated BER = 0.0279094 | Theoretical BER = 0.0278713 | Errors = 116103 / 4160000
+SNR = 7 dB | Simulated BER = 0.016869 | Theoretical BER = 0.0169667 | Errors = 70175 / 4160000
+SNR = 8 dB | Simulated BER = 0.00929375 | Theoretical BER = 0.00924721 | Errors = 38662 / 4160000
+SNR = 9 dB | Simulated BER = 0.0044387 | Theoretical BER = 0.00439034 | Errors = 18465 / 4160000
+SNR = 10 dB | Simulated BER = 0.00174904 | Theoretical BER = 0.00175415 | Errors = 7276 / 4160000
+SNR = 11 dB | Simulated BER = 0.000573798 | Theoretical BER = 0.000564706 | Errors = 2387 / 4160000
+SNR = 12 dB | Simulated BER = 0.000130769 | Theoretical BER = 0.000138659 | Errors = 544 / 4160000
+
+Simulation completed.
+Results saved to: results_awgn/ber_results.csv

@@ -104,7 +104,7 @@ public:
 
             std::size_t numberOfBits = bitsPerOfdmSymbol * config.numOfdmSymbolsPerTrial;
             std::vector<uint8_t> transmittedBits = bitSource.generate(numberOfBits);
-
+            
             // Bits → QAM symbols
             std::vector<Complex> qamSymbols = qam.modulate(transmittedBits);
             // Store all bits recovered from this trial.

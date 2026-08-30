@@ -21,8 +21,8 @@ int main(){
     vector <uint8_t> bits = b1.generate(n);
     size_t qam_size = bits.size() / bps;
     vector <Complex> qam_modulated_symbols(qam_size);
-    vector <uint8_t> demodulated_bits(n);
     qam_modulated_symbols=m1.modulate(bits);
+    vector <uint8_t> demodulated_bits(n);
     demodulated_bits = m1.demodulate(qam_modulated_symbols);
     if(bits==demodulated_bits){
         cout<<endl<<"Modulation and Demodulation working properly";
@@ -58,20 +58,25 @@ int main(){
     int error_bits = 0;
     for (int frame = 0; frame < numFrames; ++frame)
     {
-        vector <Complex> rx_time_signal_awgn =
-            awgn.addAwgn(trx_time_signal, 10, bps);
-        vector <Complex> recovered_qam_symbols_awgn =
-            ofdm_mod1.demodulate(rx_time_signal_awgn);
-        vector <uint8_t> recovered_bits_awgn =
-            m1.demodulate(recovered_qam_symbols_awgn);
+        // Generate and modulate a new frame for every iteration. The bit
+        // source remains outside the loop, so its RNG state advances.
+        vector <uint8_t> frame_bits = b1.generate(n);
+        vector <Complex> frame_qam_symbols = m1.modulate(frame_bits);
+        vector <Complex> frame_tx_signal = ofdm_mod1.modulate(frame_qam_symbols);
 
+        vector <Complex> rx_time_signal_awgn = awgn.addAwgn(frame_tx_signal, 10, bps);
+        vector <Complex> recovered_qam_symbols_awgn = ofdm_mod1.demodulate(rx_time_signal_awgn);
+        vector <uint8_t> recovered_bits_awgn = m1.demodulate(recovered_qam_symbols_awgn);
+        
+        int frame_errors = 0;
         for (size_t i = 0; i < n; i++)
         {
-            if (bits[i] != recovered_bits_awgn[i])
+            if (frame_bits[i] != recovered_bits_awgn[i])
             {
-                error_bits++;
+                ++frame_errors;
             }
         }
+        error_bits += frame_errors;
     }
     const double total_bits = static_cast<double>(n) * numFrames;
     cout<<"Simulated BER :" << error_bits / total_bits << endl;

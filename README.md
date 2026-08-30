@@ -105,6 +105,15 @@ SNR range             = 0 to 20 dB
 `BitSource` produces random bits using `std::mt19937` with a fixed seed, so
 runs are repeatable.
 
+###  HammingEncoder 
+It takes input a 11 bit information and add 5 parity bits at position 0,1,2,4,8.
+each parity looks after a group of index for which : i&p=1. we name the parities as
+p1 for index 1, p2 for index 2, p3 for index 4, p8 for index 8, p5 for index 0.
+First we place the information bits at the data positions i.e at index {3,5,6,7,9,10,11,12,13,14,15}. After that for parity we ake xor over the corresponding. 
+eg. for to set p1 : cw[p1]=cw[3]^cw[5]^cw[7]^cw[9]^cw[11]^cw[13]
+So the output of hammig encoder is a codeword cw, datatype is vector of size 16.
+We have to pass the bit stream in chunks of 11 bits through this Haming Encoder.
+
 ### QAM modulation
 
 `QamModulator` turns groups of bits into complex symbols (Gray-coded square
