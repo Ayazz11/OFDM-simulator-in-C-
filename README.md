@@ -14,6 +14,14 @@ Bit Generation → QAM Modulation → OFDM Modulation (IFFT + CP)
 → QAM Demodulation → BER Analysis
 ```
 
+## Major updates
+
+- Added a Hamming encoder/decoder pipeline for forward error correction.
+- Added `test_hamming` to validate coded OFDM bit recovery and compare it with the uncoded path.
+- Added `LinkSimulator2` to run a BER sweep with Hamming coding and decoding included in the OFDM pipeline.
+- Added `main2` to generate a BER-vs-SNR sweep for the coded path and to compare it against the uncoded baseline.
+- Compared uncoded and coded BER sweeps from 0 dB to 12 dB and confirmed that Hamming coding improves BER performance.
+
 What it currently does:
 
 - QPSK, 16-QAM, 64-QAM
@@ -21,6 +29,8 @@ What it currently does:
 - Monte Carlo BER simulation
 - Comparison against theoretical BER
 - Cyclic prefix insertion/removal
+- Hamming forward error correction
+- Coded vs. uncoded BER comparison
 - Unit tests for each stage
 
 Each part of the system is its own class, so I can test and change pieces
@@ -69,15 +79,19 @@ order and keeps count of bit errors.
     OfdmModulator.hpp     - subcarrier mapping, IFFT/FFT, CP add/remove
     Channel.hpp            - AWGN
     BerAnalyzer.hpp       - theoretical BER formula, for comparison
-    LinkSimulator.hpp     - runs the pipeline end to end
+    LinkSimulator.hpp     - runs the uncoded OFDM pipeline end to end
+    LinkSimulator2.hpp    - runs the OFDM pipeline with Hamming coding/decoding included
+    SecdedEncoder.hpp     - Hamming encoder for 11-bit data to 16-bit codewords
+    SecdedDecoder.hpp     - Hamming decoder with single-bit correction and double-bit detection
 
-    LinkSimulator.cpp
-    main.cpp              - runs one modulation scheme
+    main.cpp              - runs one modulation scheme (uncoded)
+    main2.cpp             - runs the coded BER sweep for Hamming-enabled OFDM
     main_all_mod.cpp      - runs QPSK, 16-QAM, 64-QAM together
+    test_hamming.cpp      - Hamming-specific validation and BER comparison test
 
-    plot_ber.py            - plots the BER results
+    plot_ber.py           - plots the BER results
 
-    kissfft.hh             - the FFT library (single header)
+    kissfft.hh            - the FFT library (single header)
 ```
 
 ---
@@ -178,6 +192,12 @@ see for 64-QAM at low SNR is expected, the theoretical formula is an
 approximation that gets less accurate for higher-order QAM at low SNR, not
 a bug in the simulation.
 
+For the coded OFDM pipeline, the Hamming-enabled BER sweep from 0 dB to
+12 dB shows a clear improvement over the uncoded BER. The extra parity bits
+add redundancy, so the decoder can correct many single-bit errors and
+detect double-bit errors, which reduces the final information-bit error
+rate.
+
 ---
 
 ## Cyclic prefix
@@ -216,18 +236,18 @@ QPSK/16-QAM/64-QAM so Eb/N0 means the same thing for all of them.
   transform, round-trip
 ---
 
-## Next phase
+## Current focus and next phase
 
-**1. Channel coding.** Adding a Hamming encoder/decoder around the
-existing chain:
+**1. Channel coding.** Completed: Hamming coding/decoding was added around
+the existing chain:
 
 ```
 Bits → Hamming Encoder → QAM → OFDM → Channel → OFDM Demod
 → QAM Demod → Hamming Decoder → BER
 ```
 
-Looking at coded vs. uncoded BER, how many errors get corrected, and the
-data-rate cost of the coding overhead.
+This enables coded vs. uncoded BER comparison, tracking of one-bit
+corrections and two-bit detection events, and measuring the coding gain.
 
 **2. Rayleigh multipath fading.** Replacing the AWGN-only channel with a
 multipath model (several delayed, faded paths). Looking at frequency-
