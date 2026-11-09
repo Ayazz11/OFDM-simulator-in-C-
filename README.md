@@ -236,7 +236,7 @@ QPSK/16-QAM/64-QAM so Eb/N0 means the same thing for all of them.
   transform, round-trip
 ---
 
-## Current focus and next phase
+## Current focus 
 
 **1. Channel coding.** Completed: Hamming coding/decoding was added around
 the existing chain:
@@ -259,8 +259,3 @@ shorter than the channel delay spread (ISI, broken orthogonality) vs. long
 enough (clean circular convolution, easy frequency-domain equalization),
 and the overhead/data-rate trade-off of making the CP longer.
 
-## Later on
-
-Channel estimation, ZF/MMSE equalization, DMRS/pilot insertion,
-constellation plots after the channel, BLER, PAPR analysis, more channel
-coding options.
