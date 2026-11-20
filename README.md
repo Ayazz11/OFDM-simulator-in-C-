@@ -236,18 +236,7 @@ QPSK/16-QAM/64-QAM so Eb/N0 means the same thing for all of them.
   transform, round-trip
 ---
 
-## Current focus 
-
-**1. Channel coding.** Completed: Hamming coding/decoding was added around
-the existing chain:
-
-```
-Bits → Hamming Encoder → QAM → OFDM → Channel → OFDM Demod
-→ QAM Demod → Hamming Decoder → BER
-```
-
-This enables coded vs. uncoded BER comparison, tracking of one-bit
-corrections and two-bit detection events, and measuring the coding gain.
+## Future work
 
 **2. Rayleigh multipath fading.** Replacing the AWGN-only channel with a
 multipath model (several delayed, faded paths). Looking at frequency-
